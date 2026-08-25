@@ -1,0 +1,46 @@
+version: 2
+
+models:
+
+  - name: dim_customer
+    description: "Business-ready customer dimension"
+
+    columns:
+      - name: CUSTOMER_ID
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_product
+    description: "Business-ready product dimension"
+
+    columns:
+      - name: PRODUCT_ID
+        tests:
+          - not_null
+          - unique
+
+  - name: fact_order
+    description: "Business-ready order fact"
+
+    columns:
+      - name: ORDER_ID
+        tests:
+          - not_null
+          - unique
+
+      - name: CUSTOMER_ID
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: CUSTOMER_ID
+
+      - name: PRODUCT_ID
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_product')
+                field: PRODUCT_ID
