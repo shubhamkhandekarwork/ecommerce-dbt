@@ -1,6 +1,4 @@
-{{ config(
-    materialized='table'
-) }}
+{{ config(materialized='table') }}
 
 WITH source AS (
 
@@ -15,11 +13,25 @@ cleaned AS (
         PRODUCT_ID,
         TRIM(PRODUCT_NAME) AS PRODUCT_NAME,
         TRIM(CATEGORY) AS CATEGORY,
-        CAST(PRICE AS NUMBER(12,2)) AS PRICE
+        PRICE,
+
+        ROW_NUMBER() OVER (
+            PARTITION BY PRODUCT_ID
+            ORDER BY PRODUCT_ID
+        ) AS RN
 
     FROM source
 
+    WHERE PRODUCT_ID IS NOT NULL
+
 )
 
-SELECT *
+SELECT
+    PRODUCT_ID,
+    COALESCE(PRODUCT_NAME, 'UNKNOWN') AS PRODUCT_NAME,
+    COALESCE(CATEGORY, 'UNKNOWN') AS CATEGORY,
+    COALESCE(PRICE, 0) AS PRICE
+
 FROM cleaned
+
+WHERE RN = 1

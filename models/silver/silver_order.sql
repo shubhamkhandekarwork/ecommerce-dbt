@@ -1,6 +1,4 @@
-{{ config(
-    materialized='table'
-) }}
+{{ config(materialized='table') }}
 
 WITH source AS (
 
@@ -15,13 +13,29 @@ cleaned AS (
         ORDER_ID,
         CUSTOMER_ID,
         PRODUCT_ID,
-        CAST(ORDER_DATE AS DATE) AS ORDER_DATE,
-        CAST(QUANTITY AS NUMBER) AS QUANTITY,
-        UPPER(TRIM(ORDER_STATUS)) AS ORDER_STATUS
+        ORDER_DATE,
+        QUANTITY,
+        UPPER(TRIM(ORDER_STATUS)) AS ORDER_STATUS,
+
+        ROW_NUMBER() OVER (
+            PARTITION BY ORDER_ID
+            ORDER BY ORDER_DATE DESC
+        ) AS RN
 
     FROM source
 
+    WHERE ORDER_ID IS NOT NULL
+
 )
 
-SELECT *
+SELECT
+    ORDER_ID,
+    CUSTOMER_ID,
+    PRODUCT_ID,
+    ORDER_DATE,
+    COALESCE(QUANTITY, 0) AS QUANTITY,
+    COALESCE(ORDER_STATUS, 'UNKNOWN') AS ORDER_STATUS
+
 FROM cleaned
+
+WHERE RN = 1

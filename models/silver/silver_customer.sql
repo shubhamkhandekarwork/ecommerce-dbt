@@ -1,6 +1,4 @@
-{{ config(
-    materialized='table'
-) }}
+{{ config(materialized='table') }}
 
 WITH source AS (
 
@@ -17,11 +15,29 @@ cleaned AS (
         TRIM(CITY) AS CITY,
         TRIM(STATE) AS STATE,
         LOWER(TRIM(EMAIL)) AS EMAIL,
-        UPPER(TRIM(CUSTOMER_TIER)) AS CUSTOMER_TIER
+        UPPER(TRIM(CUSTOMER_TIER)) AS CUSTOMER_TIER,
+        UPDATED_AT,
+
+        ROW_NUMBER() OVER (
+            PARTITION BY CUSTOMER_ID
+            ORDER BY UPDATED_AT DESC
+        ) AS RN
 
     FROM source
 
+    WHERE CUSTOMER_ID IS NOT NULL
+
 )
 
-SELECT *
+SELECT
+    CUSTOMER_ID,
+    COALESCE(CUSTOMER_NAME, 'UNKNOWN') AS CUSTOMER_NAME,
+    COALESCE(CITY, 'UNKNOWN') AS CITY,
+    COALESCE(STATE, 'UNKNOWN') AS STATE,
+    COALESCE(EMAIL, 'UNKNOWN') AS EMAIL,
+    COALESCE(CUSTOMER_TIER, 'UNKNOWN') AS CUSTOMER_TIER,
+    UPDATED_AT
+
 FROM cleaned
+
+WHERE RN = 1
