@@ -29,6 +29,36 @@ scd2_customer AS (
 
 ),
 
+/* =========================================================
+   1. HISTORICAL RECORDS
+   Old SCD2 versions where IS_CURRENT = FALSE
+   ========================================================= */
+
+historical_records AS (
+
+    SELECT
+        CUSTOMER_ID,
+        CUSTOMER_NAME,
+        CITY,
+        STATE,
+        EMAIL,
+        CUSTOMER_TIER,
+        VALID_FROM,
+        VALID_TO,
+        IS_CURRENT,
+        'HISTORICAL' AS SCD2_STATUS
+
+    FROM scd2_customer
+
+    WHERE IS_CURRENT = FALSE
+
+),
+
+/* =========================================================
+   2. UNCHANGED CUSTOMERS
+   Current customer exists and no values have changed
+   ========================================================= */
+
 unchanged AS (
 
     SELECT
@@ -57,6 +87,11 @@ unchanged AS (
        AND NVL(s.CUSTOMER_TIER, '') = NVL(d.CUSTOMER_TIER, '')
 
 ),
+
+/* =========================================================
+   3. CHANGED CUSTOMERS
+   Current customer exists but one or more values changed
+   ========================================================= */
 
 changed AS (
 
@@ -87,6 +122,11 @@ changed AS (
 
 ),
 
+/* =========================================================
+   4. NEW CUSTOMERS
+   Customer does not exist in SCD2 at all
+   ========================================================= */
+
 new_records AS (
 
     SELECT
@@ -109,6 +149,26 @@ new_records AS (
     WHERE d.CUSTOMER_ID IS NULL
 
 )
+
+/* =========================================================
+   5. FINAL UNION ALL
+   Historical + Unchanged + Changed + New
+   ========================================================= */
+
+SELECT
+    CUSTOMER_ID,
+    CUSTOMER_NAME,
+    CITY,
+    STATE,
+    EMAIL,
+    CUSTOMER_TIER,
+    VALID_FROM,
+    VALID_TO,
+    IS_CURRENT,
+    SCD2_STATUS
+FROM historical_records
+
+UNION ALL
 
 SELECT
     CUSTOMER_ID,
