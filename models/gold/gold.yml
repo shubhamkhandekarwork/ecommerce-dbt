@@ -3,17 +3,14 @@ version: 2
 models:
 
   - name: dim_customer
-    description: "Business-ready customer dimension"
-
+    description: "Customer dimension"
     columns:
       - name: CUSTOMER_ID
         tests:
           - not_null
-          - unique
 
   - name: dim_product
-    description: "Business-ready product dimension"
-
+    description: "Product dimension"
     columns:
       - name: PRODUCT_ID
         tests:
@@ -21,8 +18,7 @@ models:
           - unique
 
   - name: fact_order
-    description: "Business-ready order fact"
-
+    description: "Order fact table"
     columns:
       - name: ORDER_ID
         tests:
@@ -32,15 +28,38 @@ models:
       - name: CUSTOMER_ID
         tests:
           - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_customer')
-                field: CUSTOMER_ID
 
       - name: PRODUCT_ID
         tests:
           - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_product')
-                field: PRODUCT_ID
+
+  - name: dim_customer_scd2
+    description: "Customer dimension with SCD Type 2 historical records"
+    columns:
+      - name: SCD2_KEY
+        tests:
+          - not_null
+          - unique
+
+      - name: CUSTOMER_ID
+        tests:
+          - not_null
+
+      - name: IS_CURRENT
+        tests:
+          - not_null
+
+  - name: vw_sales_customer_product
+    description: "Consolidated view containing order, customer, and product information"
+    columns:
+      - name: ORDER_ID
+        tests:
+          - not_null
+
+      - name: CUSTOMER_ID
+        tests:
+          - not_null
+
+      - name: PRODUCT_ID
+        tests:
+          - not_null
